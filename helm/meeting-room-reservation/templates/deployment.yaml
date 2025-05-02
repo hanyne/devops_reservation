@@ -1,0 +1,63 @@
+{{- range $service, $image := .Values.images }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{- printf "%s" $service | lower | replace " " "-" }}
+spec:
+  replicas: {{ $.Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{- printf "%s" $service | lower | replace " " "-" }}
+  template:
+    metadata:
+      labels:
+        app: {{- printf "%s" $service | lower | replace " " "-" }}
+    spec:
+      containers:
+      - name: {{- printf "%s" $service | lower | replace " " "-" }}
+        image: {{ $image.repository }}:{{ $image.tag }}
+        ports:
+        - containerPort: {{ index $.Values.servicePorts $service }}
+        {{- if eq $service "reservationService" }}
+        env:
+        - name: SQLALCHEMY_DATABASE_URI
+          value: "postgresql://postgres:Nothing123@postgres:5432/reservation_db"
+        - name: AWS_ACCESS_KEY_ID
+          value: "your-access-key"
+        - name: AWS_SECRET_ACCESS_KEY
+          value: "your-secret-key"
+        {{- else if eq $service "userService" }}
+        env:
+        - name: SQLALCHEMY_DATABASE_URI
+          value: "postgresql://postgres:Nothing123@postgres:5432/reservation_db"
+        {{- else if eq $service "salleService" }}
+        env:
+        - name: SQLALCHEMY_DATABASE_URI
+          value: "postgresql://postgres:Nothing123@postgres:5432/reservation_db"
+        {{- else if eq $service "kafka" }}
+        env:
+        - name: KAFKA_BROKER_ID
+          value: "1"
+        - name: KAFKA_ZOOKEEPER_CONNECT
+          value: "zookeeper:2181"
+        - name: KAFKA_ADVERTISED_LISTENERS
+          value: "PLAINTEXT://kafka:9092"
+        - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+          value: "1"
+        {{- else if eq $service "zookeeper" }}
+        env:
+        - name: ZOOKEEPER_CLIENT_PORT
+          value: "2181"
+        - name: ZOOKEEPER_TICK_TIME
+          value: "2000"
+        {{- else if eq $service "postgres" }}
+        env:
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          value: "Nothing123"
+        - name: POSTGRES_DB
+          value: "reservation_db"
+        {{- end }}
+{{- end }}

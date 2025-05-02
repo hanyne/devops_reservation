@@ -1,0 +1,4 @@
+apiVersion: v2
+name: meeting-room-reservation
+description: A Helm chart for Meeting Room Reservation application
+version: 0.1.0

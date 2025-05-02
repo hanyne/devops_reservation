@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: salle-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: salle-service
+  template:
+    metadata:
+      labels:
+        app: salle-service
+    spec:
+      containers:
+      - name: salle-service
+        image: yourusername/salle-service:latest
+        ports:
+        - containerPort: 5002
+        env:
+        - name: SQLALCHEMY_DATABASE_URI
+          value: "postgresql://postgres:Nothing123@postgres:5432/reservation_db"

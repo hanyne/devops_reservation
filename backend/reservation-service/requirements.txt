@@ -1,0 +1,9 @@
+Flask==2.0.1
+Flask-SQLAlchemy==2.5.1
+SQLAlchemy==1.4.52
+psycopg2-binary==2.9.3
+Werkzeug==2.0.3
+PyJWT==2.4.0
+kafka-python==2.0.2
+flask-jwt-extended==4.4.4
+waitress==2.1.2

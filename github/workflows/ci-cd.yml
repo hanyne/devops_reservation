@@ -1,0 +1,120 @@
+name: CI/CD Pipeline for Meeting Room Reservation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test-backend:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [user-service, salle-service, reservation-service, api-gateway]
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        cd ${{ matrix.service }}
+        if [ -f requirements.txt ]; then
+          pip install -r requirements.txt
+        else
+          echo "requirements.txt not found in ${{ matrix.service }}"
+          exit 1
+        fi
+
+    - name: Run tests
+      run: |
+        cd ${{ matrix.service }}
+        if [ -d tests ]; then
+          pytest --cov=./ --cov-report=xml
+        else
+          echo "No tests directory found in ${{ matrix.service }}, skipping tests"
+        fi
+
+    - name: Build Docker image
+      run: |
+        cd ${{ matrix.service }}
+        docker build -t hanine352/meeting-room-reservation-${{ matrix.service }}:latest .
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Push Docker image
+      run: |
+        docker push hanine/meeting-room-reservation-${{ matrix.service }}:latest
+
+  build-and-test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm install
+
+    - name: Run tests
+      run: |
+        cd frontend
+        npm test -- --passWithNoTests
+
+    - name: Build Docker image
+      run: |
+        cd frontend
+        docker build -t hanine/meeting-room-reservation-frontend:latest .
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Push Docker image
+      run: |
+        docker push hanine/meeting-room-reservation-frontend:latest
+
+  deploy:
+    needs: [build-and-test-backend, build-and-test-frontend]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v4
+      with:
+        version: v3.9.0
+
+    - name: Set up Kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'latest'
+
+    - name: Configure kubeconfig
+      run: |
+        echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > $HOME/.kube/config
+
+    - name: Deploy to Kubernetes with Helm
+      run: |
+        helm upgrade --install meeting-room-reservation ./helm \
+          --values ./helm/values.yaml \
+          --namespace default \
+          --create-namespace

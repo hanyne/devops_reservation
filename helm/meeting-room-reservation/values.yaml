@@ -1,0 +1,37 @@
+replicaCount: 2
+
+images:
+  frontend:
+    repository: yourusername/meeting-room-frontend
+    tag: latest
+  gateway:
+    repository: yourusername/gateway
+    tag: latest
+  reservationService:
+    repository: yourusername/reservation-service
+    tag: latest
+  salleService:
+    repository: yourusername/salle-service
+    tag: latest
+  userService:
+    repository: yourusername/user-service
+    tag: latest
+  kafka:
+    repository: confluentinc/cp-kafka
+    tag: latest
+  zookeeper:
+    repository: confluentinc/cp-zookeeper
+    tag: latest
+  postgres:
+    repository: postgres
+    tag: 13
+
+servicePorts:
+  frontend: 3000
+  gateway: 5000
+  reservationService: 5003
+  salleService: 5002
+  userService: 5001
+  kafka: 9092
+  zookeeper: 2181
+  postgres: 5432

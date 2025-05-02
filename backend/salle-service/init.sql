@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS salles (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    capacity INTEGER NOT NULL,
+    available BOOLEAN DEFAULT TRUE
+);
